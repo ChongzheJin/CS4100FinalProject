@@ -6,6 +6,9 @@ A Python script that organizes geotagged images into a grid system based on thei
 
 This tool takes images named with their GPS coordinates (e.g., `38.123456,-122.654321.jpg`) and sorts them into a grid of directories based on their geographic location. Images that fall outside the defined boundaries are placed in an 'unfit' directory.
 
+## Setup
+make sure to change directory into ./dataset before running and place the united_states folder (holding grid-0-0) in this dataset directory (same level as this README.md). Otherwise, change the base_dir in the `__main__` section.
+
 ## How It Works
 
 ### 1. Grid Generation
@@ -70,9 +73,6 @@ Images must be named with their coordinates in this format:
 - Example: `38.897957,-77.036560.jpg` (Washington, DC)
 
 ## Usage
-
-### Basic Usage
-make sure to change directory into ./dataset before running and place the united_states folder (holding grid-0-0) in this dataset directory (same level as this README.md). Otherwise, change the base_dir in the `__main__` section.
 
 ### Custom Configuration
 Modify the parameters in the `__main__` section:
