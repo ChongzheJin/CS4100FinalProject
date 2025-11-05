@@ -18,7 +18,8 @@ for p in sorted(img_dir.rglob("*")):
         continue
     lat = float(m.group("lat"))
     lon = float(m.group("lon"))
-    rows.append([str(p), lat, lon])
+    rel = p.resolve().relative_to(ROOT)
+    rows.append([rel.as_posix(), lat, lon])
 
 with open(out_csv, "w", newline="", encoding="utf-8") as f:
     w = csv.writer(f)
