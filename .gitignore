@@ -4,6 +4,9 @@
 .DS_Store
 Thumbs.db
 
+# remove dataset from commit
+**/dataset/united_states/
+
 # --- Python ---
 __pycache__/
 *.py[cod]
