@@ -2,7 +2,7 @@ import re, csv
 from pathlib import Path
 import tqdm
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 img_dir = ROOT / "data" / "raw" / "us_streetview" / "images"
 out_csv = ROOT / "data" / "processed" / "us_streetview" / "all_images.csv"
 out_csv.parent.mkdir(parents=True, exist_ok=True)
