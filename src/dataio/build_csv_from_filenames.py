@@ -1,0 +1,28 @@
+import re, csv
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+img_dir = ROOT / "data" / "raw" / "us_streetview" / "Images"
+out_csv = ROOT / "data" / "processed" / "all_images.csv"
+out_csv.parent.mkdir(parents=True, exist_ok=True)
+
+# Get lat/lon from filename
+pat = re.compile(r"^(?P<lat>-?\d+(?:\.\d+)?),(?P<lon>-?\d+(?:\.\d+)?)\.(jpg|jpeg|png)$", re.IGNORECASE)
+
+rows = []
+for p in sorted(img_dir.rglob("*")):
+    if p.suffix.lower() not in {".jpg",".jpeg",".png"}:
+        continue
+    m = pat.match(p.name)
+    if not m:
+        continue
+    lat = float(m.group("lat"))
+    lon = float(m.group("lon"))
+    rows.append([str(p), lat, lon])
+
+with open(out_csv, "w", newline="") as f:
+    w = csv.writer(f)
+    w.writerow(["image_path","lat","lon"])
+    w.writerows(rows)
+
+print(f"Wrote {len(rows)} rows -> {out_csv}")
