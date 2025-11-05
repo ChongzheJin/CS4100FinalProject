@@ -20,7 +20,7 @@ for p in sorted(img_dir.rglob("*")):
     lon = float(m.group("lon"))
     rows.append([str(p), lat, lon])
 
-with open(out_csv, "w", newline="") as f:
+with open(out_csv, "w", newline="", encoding="utf-8") as f:
     w = csv.writer(f)
     w.writerow(["image_path","lat","lon"])
     w.writerows(rows)
