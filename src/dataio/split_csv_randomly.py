@@ -2,8 +2,8 @@ import csv, random
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-in_csv = ROOT / "data" / "processed" / "all_images.csv"
-out_dir = ROOT / "data" / "processed"
+in_csv = ROOT / "data" / "processed" / "us_streetview" / "all_images.csv"
+out_dir : Path = ROOT / "data" / "processed" / "us_streetview"
 out_dir.mkdir(parents=True, exist_ok=True)
 
 with open(in_csv, newline="", encoding="utf-8") as f:

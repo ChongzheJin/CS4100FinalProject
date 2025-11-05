@@ -1,16 +1,17 @@
 import re, csv
 from pathlib import Path
+import tqdm
 
 ROOT = Path(__file__).resolve().parents[2]
-img_dir = ROOT / "data" / "raw" / "us_streetview" / "Images"
-out_csv = ROOT / "data" / "processed" / "all_images.csv"
+img_dir = ROOT / "data" / "raw" / "us_streetview" / "images"
+out_csv = ROOT / "data" / "processed" / "us_streetview" / "all_images.csv"
 out_csv.parent.mkdir(parents=True, exist_ok=True)
 
 # Get lat/lon from filename
 pat = re.compile(r"^(?P<lat>-?\d+(?:\.\d+)?),(?P<lon>-?\d+(?:\.\d+)?)\.(jpg|jpeg|png)$", re.IGNORECASE)
 
 rows = []
-for p in sorted(img_dir.rglob("*")):
+for p in tqdm.tqdm(sorted(img_dir.rglob("*")), desc="Processing images", unit="image", total=len(list(img_dir.rglob("*")))):
     if p.suffix.lower() not in {".jpg",".jpeg",".png"}:
         continue
     m = pat.match(p.name)
