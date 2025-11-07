@@ -19,6 +19,13 @@ for p in tqdm.tqdm(sorted(img_dir.rglob("*")), desc="Processing images", unit="i
         continue
     lat = float(m.group("lat"))
     lon = float(m.group("lon"))
+    
+    # Filter out Alaska and Hawaii (continental US only)
+    # Using same bounds as reorganize_dataset.py
+    # Continental US: lat 24.455005 to 49.049081, lon -125.450687 to -67.343249
+    if not (24.455005 <= lat <= 49.049081 and -125.450687 <= lon <= -67.343249):
+        continue  # Skip Alaska/Hawaii images
+    
     rel = p.resolve().relative_to(ROOT)
     rows.append([rel.as_posix(), lat, lon])
 
