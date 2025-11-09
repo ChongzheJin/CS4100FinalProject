@@ -194,13 +194,13 @@ def main():
     parser.add_argument(
         '--data-config',
         type=str,
-        default='configs/data.yaml',
+        default=ROOT / 'configs/data.yaml',
         help='Path to data configuration file'
     )
     parser.add_argument(
         '--train-config',
         type=str,
-        default='configs/train_agent1.yaml',
+        default=ROOT / 'configs/train_agent1.yaml',
         help='Path to training configuration file'
     )
     parser.add_argument(
@@ -272,7 +272,8 @@ def main():
         lon_max=lon_max,
         normalize=True
     ).to(device)
-    
+
+    """
     # Create optimizer
     optimizer_config = train_config['optimizer']
     if optimizer_config['type'].lower() == 'adam':
@@ -291,7 +292,36 @@ def main():
         )
     else:
         raise ValueError(f"Unknown optimizer: {optimizer_config['type']}")
-    
+    """
+
+    optimizer_config = train_config['optimizer']
+    lr = float(train_config['training']['learning_rate'])
+    wd = float(train_config['training']['weight_decay'])
+    opt_type = optimizer_config['type'].lower()
+
+    if opt_type == 'adam':
+        betas = optimizer_config.get('betas', [0.9, 0.999])
+        betas = (float(betas[0]), float(betas[1]))
+        optimizer = torch.optim.Adam(
+            model.parameters(),
+            lr=lr,
+            weight_decay=wd,
+            betas=betas
+        )
+    elif opt_type == 'sgd':
+        optimizer = torch.optim.SGD(
+            model.parameters(),
+            lr=lr,
+            weight_decay=wd,
+            momentum=0.9
+        )
+    else:
+        raise ValueError(f"Unknown optimizer: {optimizer_config['type']}")
+
+    print("[debug] optimizer lr types:", [type(g['lr']).__name__ for g in optimizer.param_groups])
+
+
+    """
     # Create learning rate scheduler
     scheduler_config = train_config['scheduler']
     scheduler = None
@@ -308,7 +338,33 @@ def main():
             optimizer,
             T_max=train_config['training']['epochs']
         )
-    
+    """
+
+    scheduler_config = train_config['scheduler']
+    scheduler = None
+
+    if scheduler_config['type'] == 'reduce_on_plateau':
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode='min',
+            factor=float(scheduler_config['factor']),
+            patience=int(scheduler_config['patience']),
+            min_lr=float(scheduler_config.get('min_lr', 0.0))
+        )
+    elif scheduler_config['type'] == 'cosine':
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=int(train_config['training']['epochs']),
+            eta_min=float(scheduler_config.get('min_lr', 0.0))
+        )
+
+    print("[debug] scheduler types:",
+          "factor", type(scheduler_config.get('factor')).__name__,
+          "patience", type(scheduler_config.get('patience')).__name__,
+          "min_lr", type(scheduler_config.get('min_lr')).__name__)
+
+
+
     # Resume from checkpoint if specified
     start_epoch = 0
     best_val_loss = float('inf')
