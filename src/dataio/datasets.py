@@ -128,7 +128,7 @@ class GeoCSVDataset(Dataset):
             src_path = Path(__file__).resolve().parent.parent
             if str(src_path) not in sys.path:
                 sys.path.insert(0, str(src_path))
-            from utils.coordinates import normalize_coordinates
+            from src.utils.coordinates import normalize_coordinates
             
             coords_deg = torch.tensor([[lat_deg, lon_deg]], dtype=torch.float32)
             coords_norm = normalize_coordinates(
