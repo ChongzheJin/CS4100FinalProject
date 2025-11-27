@@ -1,5 +1,6 @@
 train_csv: data/processed/us_streetview/train.csv
 test_csv: data/processed/us_streetview/test.csv
 val_csv: data/processed/us_streetview/val.csv
-img_size: 256
+grid_path: "dataset/united_states"
+img_size: 244
 batch_size: 64
