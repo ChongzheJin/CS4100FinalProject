@@ -2,7 +2,8 @@ images_root: data/processed/us_streetview/images
 train_csv: data/processed/us_streetview/train.csv
 test_csv: data/processed/us_streetview/test.csv
 val_csv: data/processed/us_streetview/val.csv
-img_size: 256
+grid_path: dataset/united_states
+img_size: 224
 batch_size: 64
 num_workers: 4
 image_root: data/images
