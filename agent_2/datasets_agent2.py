@@ -15,7 +15,7 @@ class StreetViewGridDataset(Dataset):
     """
     Dataset for Agent 2 — loads images and maps (lat, lon) → grid label.
     """
-    def __init__(self, csv_path, img_size=256, transform=None):
+    def __init__(self, csv_path, img_size=224, transform=None):
         self.df = pd.read_csv(csv_path)
         self.transform = transform or transforms.Compose([
             transforms.Resize((img_size, img_size)),

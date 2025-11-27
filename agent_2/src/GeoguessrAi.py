@@ -1061,27 +1061,7 @@ class GeoGuessrAI:
         if 'top5_acc' in history.history:
             print(f"  Final Val Top-5 Accuracy:  {history.history['val_top5_acc'][-1]:.4f}")
 
-
-# Main execution
-if __name__ == "__main__":
-
-    base_dir = "../../dataset/united_states"
-    
-    # ========================================
-    # CONFIGURATION
-    # ========================================
-    MODE = "recover"  # Options: "train", "recover", "evaluate"
-    
-    # Initialize the AI system with minimum threshold
-    ai = GeoGuessrAI(
-        base_dir=base_dir,
-        min_images_threshold=600  # Adjust this threshold as needed
-    )
-    
-    # ========================================
-    # MODE: RECOVER - Load existing model
-    # ========================================
-    if MODE == "recover":
+    def render_recover_options():
         print("\n" + "="*70)
         print("RECOVERING TRAINED MODEL")
         print("="*70)
@@ -1174,7 +1154,7 @@ if __name__ == "__main__":
                 print("6. Show all visualizations")
                 print("0. Exit")
                 
-                choice = input("\nEnter your choice (0-6): ").strip()
+                choice = input("\nEnter your choice (0-6): ")
                 
                 test_dir = os.path.join(base_dir, "test")
                 
@@ -1191,7 +1171,7 @@ if __name__ == "__main__":
                 elif choice == "2":
                     # Visualize predictions
                     if os.path.exists(test_dir):
-                        num = input("How many samples to visualize? (default 6): ").strip()
+                        num = input("How many samples to visualize? (default 6): ")
                         num_samples = int(num) if num else 6
                         ai.visualize_test_predictions(test_dir, num_samples=num_samples, random_selection=True)
                     else:
@@ -1200,7 +1180,7 @@ if __name__ == "__main__":
                 elif choice == "3":
                     # Analyze misclassifications
                     if os.path.exists(test_dir):
-                        num = input("How many misclassifications to show? (default 5): ").strip()
+                        num = input("How many misclassifications to show? (default 5): ")
                         num_examples = int(num) if num else 5
                         ai.analyze_misclassifications(test_dir, num_examples=num_examples)
                     else:
@@ -1209,7 +1189,7 @@ if __name__ == "__main__":
                 elif choice == "4":
                     # Single image comprehensive analysis
                     if os.path.exists(test_dir):
-                        use_random = input("Use random image? (y/n, default y): ").strip().lower()
+                        use_random = input("Use random image? (y/n, default y): ").lower()
                         
                         sample_image = None
                         true_grid = None
@@ -1564,10 +1544,7 @@ if __name__ == "__main__":
             print("Switching to training mode...")
             MODE = "train"
     
-    # ========================================
-    # MODE: TRAIN - Train new model
-    # ========================================
-    if MODE == "train":
+    def render_train_options():
         # Step 1: Prepare train/validation/test split
         print("\n" + "="*70)
         print("STEP 1: DATA PREPARATION")
@@ -1620,11 +1597,8 @@ if __name__ == "__main__":
         
         # Analyze misclassifications
         ai.analyze_misclassifications(test_dir, num_examples=5)
-    
-    # ========================================
-    # MODE: EVALUATE - Just evaluate existing model
-    # ========================================
-    elif MODE == "evaluate":
+
+    def render_evaluate_options():
         print("\n" + "="*70)
         print("EVALUATION MODE")
         print("="*70)
@@ -1660,6 +1634,66 @@ if __name__ == "__main__":
                 print("❌ Test directory not found!")
         else:
             print("❌ No models found to evaluate!")
+
+# Main execution
+if __name__ == "__main__":
+
+    base_dir = "../../dataset/united_states"
+    
+    # ========================================
+    # CONFIGURATION
+    # ========================================
+
+    print("========== WELCOME ==========")
+    print("To get started, choose an action for the model")
+    print("1. Recover a model to test")
+    print("2. Train a new model")
+    print("3. Evaluate an existing model")
+    mode_input = input("Select an (default 1): ")
+    if mode_input == "1":
+        MODE = "recover"
+    elif mode_input == "2":
+        MODE = "train"
+    elif mode_input == "3":
+        MODE = "evaluate"
+    else:
+        MODE = "recover"
+
+    print()
+    print()
+
+    threshold = 600
+
+    if MODE == "train":
+        threshold = input("Enter a minimum number of training images to qualify a grid for training (default 600): ")
+        if threshold != "":
+            threshold = int(threshold)
+   
+    print()
+    
+    # Initialize the AI system with minimum threshold
+    ai = GeoGuessrAI(
+        base_dir=base_dir,
+        min_images_threshold=threshold
+    )
+    
+    # ========================================
+    # MODE: RECOVER - Load existing model
+    # ========================================
+    if MODE == "recover":
+        GeoGuessrAI.render_recover_options()
+    
+    # ========================================
+    # MODE: TRAIN - Train new model
+    # ========================================
+    if MODE == "train":
+        GeoGuessrAI.render_train_options()
+    
+    # ========================================
+    # MODE: EVALUATE - Just evaluate existing model
+    # ========================================
+    elif MODE == "evaluate":
+        GeoGuessrAI.render_evaluate_options()
     
     # ========================================
     # FINAL SUMMARY
@@ -1667,15 +1701,8 @@ if __name__ == "__main__":
     print("\n" + "="*70)
     print("EXECUTION COMPLETE!")
     print("="*70)
-    
-    if MODE == "recover":
-        print("✅ Model recovered and ready for use")
-        print(f"   Grid configuration: {ai.grid_dims}")
-        print("\nNext steps:")
-        print("  - Change MODE to 'train' to train a new model")
-        print("  - Use the interactive menu to explore your model")
         
-    elif MODE == "train":
+    if MODE == "train":
         print(f"\nModels and results saved in {ai.base_dir}:")
         print(f"  📁 best_model_{ai.grid_dims}.keras       - Best model during training")
         print(f"  📁 final_model_{ai.grid_dims}.keras      - Final model after all epochs")
@@ -1688,5 +1715,3 @@ if __name__ == "__main__":
             print(f"\n⚠️  Excluded grids (< {ai.min_images_threshold} images):")
             for grid in ai.excluded_grids:
                 print(f"    - {grid}")
-    
-    print("\n✅ Model is ready for deployment!")

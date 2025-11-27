@@ -5,9 +5,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from torchvision import models, transforms
+from torchvision import models
 from tqdm import tqdm
 from datasets_agent2 import StreetViewGridDataset
+import re
+from pathlib import Path
 
 
 # Load Config
@@ -15,6 +17,7 @@ CONFIG_PATH = "configs/data.yaml"
 with open(CONFIG_PATH, "r") as f:
     cfg = yaml.safe_load(f)
 
+grid_path = Path(cfg["grid_path"])
 train_csv = cfg["train_csv"]
 val_csv = cfg["val_csv"]
 img_size = cfg["img_size"]
@@ -28,8 +31,34 @@ val_dataset = StreetViewGridDataset(val_csv, img_size)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
-num_classes = 49
+# ==============================================
+#      number of grids from file structure     
+# ==============================================
 
+# Find all grid directories and extract row/col numbers
+grid_pattern = re.compile(r'^grid-(\d+)-(\d+)$')
+rows = set()
+cols = set()
+
+for dir_path in grid_path.iterdir():
+    if dir_path.is_dir():
+        match = grid_pattern.match(dir_path.name)
+        if match:
+            rows.add(int(match.group(1)))
+            cols.add(int(match.group(2)))
+
+# Calculate dimensions (0 indexed)
+n_rows = max(rows) + 1 if rows else 0
+n_cols = max(cols) + 1 if cols else 0
+
+print(f"Grid dimensions: {n_rows}-{n_cols}")
+print(f"num_classes = {n_rows * n_cols}")
+
+num_classes = n_rows * n_cols
+
+# ==============================================
+#                   model stuff
+# ==============================================
 
 # Model Setup
 device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
@@ -40,7 +69,7 @@ model.fc = nn.Linear(model.fc.in_features, num_classes)
 model = model.to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-4)
+optimizer = optim.Adam(model.parameters(), lr=1e-4) # adam model
 
 
 # Training Loop
