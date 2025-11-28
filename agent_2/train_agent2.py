@@ -18,9 +18,9 @@ from datasets_agent2 import StreetViewGridDataset
 # Constants & Config
 # -----------------------------
 CONFIG_PATH = "configs/data.yaml"
-RESUME = False  # Set to True to resume from checkpoint
-EPOCHS_1 = 30
-EPOCHS_2 = 40
+RESUME = True  # Set to True to resume from checkpoint
+EPOCHS_1 = 10
+EPOCHS_2 = 60
 TOTAL_EPOCHS = EPOCHS_1 + EPOCHS_2
 CORES = 4
 
@@ -121,6 +121,7 @@ def run_epoch(model, loader, optimizer, criterion, train=True):
 
             if train:
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 optimizer.step()
 
             running_loss += loss.item() * imgs.size(0)
@@ -156,8 +157,10 @@ if __name__ == '__main__':
     train_transform = transforms.Compose([
         # transforms.RandomResizedCrop(img_size, scale=(0.7, 1.0)),
         transforms.Resize((img_size, img_size)),
-        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
         transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),
+        transforms.RandomApply([
+            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1)
+        ], p=0.3),
         transforms.ToTensor(),
         transforms.Normalize(mean, std),
     ])
@@ -214,11 +217,14 @@ if __name__ == '__main__':
     # Model Setup
     # -----------------------------
     model = models.resnet50(weights="IMAGENET1K_V1")
-    model.fc = nn.Linear(model.fc.in_features, num_classes)
+    model.fc = nn.Sequential(
+        nn.Dropout(0.3),
+        nn.Linear(model.fc.in_features, num_classes),
+    )
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss(weight=class_weights)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.AdamW(model.fc.parameters(), lr=3e-4, weight_decay=0.01)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer,
         mode='min',
@@ -306,10 +312,13 @@ if __name__ == '__main__':
         # Update optimizer with lower learning rate
         optimizer = optim.SGD(
             filter(lambda p: p.requires_grad, model.parameters()), 
-            lr=0.01,
+            lr=0.001,
             momentum=0.9,
             weight_decay=5e-4,
             nesterov=True
+        )
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode='min', factor=0.5, patience=4, min_lr=1e-5
         )
         
         for epoch in range(start_epoch, TOTAL_EPOCHS):
@@ -317,6 +326,8 @@ if __name__ == '__main__':
             
             train_loss, t1, t3, t5 = run_epoch(model, train_loader, optimizer, criterion, train=True)
             val_loss, v1, v3, v5 = run_epoch(model, val_loader, optimizer, criterion, train=False)
+            
+            scheduler.step(val_loss)
             
             # Update history
             history['train_loss'].append(train_loss)
