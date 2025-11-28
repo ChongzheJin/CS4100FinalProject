@@ -18,7 +18,7 @@ def haversine_km(lat1, lon1, lat2, lon2):
 
 
 
-# Computes a 49 length vector (one per grid) where closer distances get a value closer
+# Computes a 49 length vector (one per grid) of likelihood terms where closer distances get a value closer
 # to 1 and farther distances get a value closer to 0
 def compute_likelihood_terms(lat1, lon1, sigma_km=800.0):
     num_grids = GRID_MAPPER.num_classes
