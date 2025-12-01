@@ -187,7 +187,7 @@ class CombinedAgentTester:
             probs = torch.softmax(logits, dim=1)[0].cpu().numpy()
         
         # Combine scores
-        scores = probs * likelihoods
+        scores = probs + likelihoods
         
         if scores.sum() == 0:
             scores = probs
