@@ -22,16 +22,23 @@ import seaborn as sns
 import json
 import random
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(ROOT))
+from data.datasets import GeoCSVDataset
+
 # Add paths
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "agent_1" / "src"))
 
 # Import custom modules
-from agent_2.grid_mapper import GridMapper
-from dataio.datasets import GeoCSVDataset
+from agent_2.src.grid_mapper import GridMapper
 from models.agent1_model import create_model as create_agent1_model
 from utils.coordinates import compute_normalization_params
+
+# UNCOMMENT TO DOWNLOAD MODEL
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # Initialize grid mapper
 GRID_MAPPER = GridMapper(rows=7, cols=7)
@@ -85,7 +92,7 @@ class CombinedAgentTester:
         
         # Load map if exists
         self.map_img = None
-        map_path = "dataset/NA_map.png"
+        map_path = "data/NA_map.png"
         if os.path.exists(map_path):
             self.map_img = Image.open(map_path)
             print(f"Map loaded from {map_path}")
@@ -413,8 +420,6 @@ class CombinedAgentTester:
             print("Loading test dataset...")
             test_csv = self.data_config.get('test_csv', self.data_config['val_csv'])
             
-            # First, let's load without normalization to see raw values
-            from dataio.datasets import GeoCSVDataset
             self.test_dataset = GeoCSVDataset(
                 csv_path=test_csv,
                 img_size=self.data_config['img_size'],
@@ -446,8 +451,7 @@ class CombinedAgentTester:
         """Load training dataset for random sampling"""
         if self.train_dataset is None:
             print("Loading training dataset for sampling...")
-            
-            from dataio.datasets import GeoCSVDataset
+    
             self.train_dataset = GeoCSVDataset(
                 csv_path=self.data_config['train_csv'],
                 img_size=self.data_config['img_size'],
@@ -550,6 +554,84 @@ class CombinedAgentTester:
             save_path='combined_test_results/random_prediction.png',
             original_img=original_img
         )
+
+    def test_specific_image(self, path):
+        """Test on a specific image"""
+        self.load_train_data()
+        
+        # Check if path exists
+        if not os.path.exists(path):
+            print(f"Error: Image path '{path}' does not exist")
+            return
+        
+        # Load the specific image
+        original_img = Image.open(path).convert('RGB')
+        print(f"\nTesting on image: {path}")
+        
+        # Extract coordinates from filename
+        # Format: "dataset/united_states/grid-5-3/29.213949142947,-97.83494812509969.jpg"
+        filename = os.path.basename(path)  # "29.213949142947,-97.83494812509969.jpg"
+        filename_without_ext = os.path.splitext(filename)[0]  # "29.213949142947,-97.83494812509969"
+        
+        try:
+            # Split by comma to get lat and lon
+            lat_str, lon_str = filename_without_ext.split(',')
+            true_lat = float(lat_str)
+            true_lon = float(lon_str)
+            print(f"Extracted coordinates from filename: lat={true_lat}, lon={true_lon}")
+            print(f"True grid: {GRID_MAPPER.latlon_to_grid(true_lat, true_lon)}")
+            
+        except Exception as e:
+            print(f"Error parsing coordinates from filename: {e}")
+            print("Proceeding without ground truth coordinates...")
+            true_lat, true_lon = None, None
+        
+        # Apply transforms to prepare the image for the model
+        img_tensor = self.transform(original_img)
+        
+        # Get predictions
+        final_lat, final_lon, details = self.combine_agents(img_tensor, return_details=True)
+        
+        # Print results
+        agent1_lat, agent1_lon = details['agent1_coords']
+        print(f"\nAgent 1 prediction: ({agent1_lat:.4f}, {agent1_lon:.4f})")
+        print(f"  Grid: {details['agent1_grid']}")
+        
+        print(f"\nAgent 2 top prediction: Grid {details['agent2_top_grid']}")
+        print(f"  Confidence: {details['agent2_probs'][details['agent2_top_grid']]:.2%}")
+        
+        print(f"\nCombined prediction: ({final_lat:.4f}, {final_lon:.4f})")
+        print(f"  Final grid: {details['final_grid']}")
+        
+        # Calculate errors if we have ground truth
+        if true_lat is not None and true_lon is not None:
+            agent1_error = self.haversine_km(true_lat, true_lon, agent1_lat, agent1_lon)
+            combined_error = self.haversine_km(true_lat, true_lon, final_lat, final_lon)
+            
+            print(f"\nAgent 1 error: {agent1_error:.1f} km")
+            print(f"Combined error: {combined_error:.1f} km")
+            
+            improvement = (agent1_error - combined_error)
+            if agent1_error > 0:
+                print(f"Improvement over Agent 1: {improvement:.1f} km ({improvement/agent1_error*100:.1f}%)")
+            
+            # Visualize with ground truth
+            self.visualize_combined_prediction(
+                img_tensor, 
+                true_coords=(true_lat, true_lon),
+                save_path='combined_test_results/specific_prediction.png',
+                original_img=original_img,
+                img_path=path
+            )
+        else:
+            # Visualize without ground truth
+            self.visualize_combined_prediction(
+                img_tensor,
+                true_coords=None,
+                save_path='combined_test_results/specific_prediction.png',
+                original_img=original_img,
+                img_path=path
+            )
     
     def run_full_test(self):
         """Run full test set evaluation"""
@@ -692,15 +774,15 @@ def print_menu():
     print("COMBINED AGENT TESTER")
     print("="*50)
     print("1. Test on random image")
-    print("2. Run full test set evaluation")
-    print("3. Exit")
+    print("2. Test on specific image path")
+    print("3. Run full test set evaluation")
+    print("4. Exit")
     print("-"*50)
 
 
 def main():
     """Main function"""
-    # Configuration - UPDATE THESE PATHS
-    AGENT1_CHECKPOINT = "configs/best_checkpoint.pt"
+    AGENT1_CHECKPOINT = "agent_1/checkpoints/agent1/best_checkpoint.pt"
     AGENT2_CHECKPOINT = "agent_2/saved_models/latest.pth"
     DATA_CONFIG = "configs/data.yaml"
     TRAIN_CONFIG = "configs/train_agent1.yaml"
@@ -715,21 +797,23 @@ def main():
     
     while True:
         print_menu()
-        choice = input("Enter your choice (1-3): ").strip()
+        choice = input("Enter your choice (1-4): ").strip()
         
         if choice == '1':
             tester.test_random_image()
         elif choice == '2':
-            tester.run_full_test()
+            image_path = input("Enter image path: ").strip()
+            tester.test_specific_image(image_path)
         elif choice == '3':
+            tester.run_full_test()
+        elif choice == '4':
             print("\nExiting... Goodbye!")
             break
         else:
-            print("Invalid choice. Please enter 1-3.")
+            print("Invalid choice. Please enter 1-4.")
         
-        if choice in ['1', '2']:
+        if choice in ['1', '2', '3']:
             input("\nPress Enter to continue...")
-
 
 if __name__ == "__main__":
     main()

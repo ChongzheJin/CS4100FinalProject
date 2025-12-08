@@ -7,9 +7,9 @@ from torch.utils.data import Dataset
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 
-def default_transforms(img_size = 256, train = True) -> A.Compose:
+def default_transforms(img_size = 224, train = True) -> A.Compose:
     """
     Build albumentations transforms for training or eval
 
@@ -48,6 +48,20 @@ def _to_abs(path_str: str) -> str:
         return str((ROOT / p).resolve())
 
 
+def normalize_coordinates_simple(coords_deg, lat_min, lat_max, lon_min, lon_max):
+    """
+    Simple coordinate normalization to [-1, 1] range.
+    This avoids the import issue by implementing it directly here.
+    """
+    lat, lon = coords_deg[:, 0], coords_deg[:, 1]
+    
+    # Normalize to [-1, 1] range
+    lat_norm = 2 * (lat - lat_min) / (lat_max - lat_min) - 1
+    lon_norm = 2 * (lon - lon_min) / (lon_max - lon_min) - 1
+    
+    return torch.stack([lat_norm, lon_norm], dim=-1)
+
+
 class GeoCSVDataset(Dataset):
     """
     Dataset that loads images and information of location(lat, lon) from a csv file.
@@ -60,7 +74,7 @@ class GeoCSVDataset(Dataset):
     def __init__(
         self,
         csv_path: str,
-        img_size: int = 256,
+        img_size: int = 224,
         train: bool = True,
         lat_min: float = None,
         lat_max: float = None,
@@ -122,16 +136,8 @@ class GeoCSVDataset(Dataset):
         
         # Normalize coordinates to [-1, 1] range if requested
         if self.normalize:
-            import sys
-            from pathlib import Path
-            # Add src to path if not already there
-            src_path = Path(__file__).resolve().parent.parent
-            if str(src_path) not in sys.path:
-                sys.path.insert(0, str(src_path))
-            from src.utils.coordinates import normalize_coordinates
-            
             coords_deg = torch.tensor([[lat_deg, lon_deg]], dtype=torch.float32)
-            coords_norm = normalize_coordinates(
+            coords_norm = normalize_coordinates_simple(
                 coords_deg,
                 self.lat_min,
                 self.lat_max,

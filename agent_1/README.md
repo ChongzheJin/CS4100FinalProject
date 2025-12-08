@@ -28,7 +28,7 @@ caffeinate -d -i -m -s -t 36000  # 10 hours (36000 seconds)
 
 ### Run training with caffeinate:
 ```bash
-caffeinate -d -i -m -s python src/train_agent1.py
+caffeinate -d -i -m -s python agent_1/src/train_agent1.py
 ```
 
 ## System Settings (Alternative)
@@ -41,7 +41,7 @@ caffeinate -d -i -m -s python src/train_agent1.py
 
 **Recommended approach**: Run training with caffeinate:
 ```bash
-caffeinate -d -i -m -s python src/train_agent1.py
+caffeinate -d -i -m -s python agent_1/src/train_agent1.py
 ```
 
 This ensures your Mac won't sleep even if the display turns off, and training will continue uninterrupted.

@@ -1,5 +1,5 @@
-checkpoint: checkpoints/agent1/best_checkpoint.pt
-output_dir: outputs/eval_agent1
+checkpoint: agent_1/checkpoints/agent1/best_checkpoint.pt
+output_dir: agent_1/outputs/eval_agent1
 write_predictions_csv: true
 write_metrics_json: true
 limit: null

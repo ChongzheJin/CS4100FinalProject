@@ -27,11 +27,11 @@ early_stopping:
   min_delta: 0.0
   
 checkpoint:
-  save_dir: "checkpoints/agent1"
+  save_dir: "agent_1/checkpoints/agent1"
   save_best: true
   save_every_n_epochs: 5  # Save checkpoint every N epochs (0 to disable)
 
 logging:
-  log_dir: "logs/agent1"
+  log_dir: "agent_1/logs/agent1"
   print_every_n_batches: 50
 

@@ -8,12 +8,18 @@ import torch
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+import sys
+
+# UNCOMMENT TO DOWNLOAD MODEL
+# import ssl
+# ssl._create_default_https_context = ssl._create_unverified_context
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(ROOT))
 
 from models.agent1_model import create_model
-from src.utils.coordinates import compute_normalization_params
-from dataio.datasets import GeoCSVDataset
-
-ROOT = Path(__file__).resolve().parents[1]
+from utils.coordinates import compute_normalization_params
+from data.datasets import GeoCSVDataset
 
 def load_yaml(path: Path) -> dict:
     if not path.exists():

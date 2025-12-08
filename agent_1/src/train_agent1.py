@@ -16,10 +16,14 @@ import json
 from tqdm import tqdm
 
 # Add src to path
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(ROOT))
 
-from dataio.datasets import GeoCSVDataset
+# UNCOMMENT TO DOWNLOAD MODEL
+# import ssl
+# ssl._create_default_https_context = ssl._create_unverified_context
+
+from data.datasets import GeoCSVDataset
 from models.agent1_model import create_model
 from utils.losses import HaversineLoss
 from utils.coordinates import compute_normalization_params
@@ -49,9 +53,13 @@ def should_use_pin_memory(device):
 
 
 def create_data_loaders(data_config, train_config, lat_min, lat_max, lon_min, lon_max, device):
+
+    train_csv_path = ROOT / data_config['train_csv']
+    val_csv_path = ROOT / data_config['val_csv']
+
     """Create train and validation data loaders."""
     train_dataset = GeoCSVDataset(
-        csv_path=data_config['train_csv'],
+        csv_path=str(train_csv_path),
         img_size=data_config['img_size'],
         train=True,
         lat_min=lat_min,
@@ -62,7 +70,7 @@ def create_data_loaders(data_config, train_config, lat_min, lat_max, lon_min, lo
     )
     
     val_dataset = GeoCSVDataset(
-        csv_path=data_config['val_csv'],
+        csv_path=str(val_csv_path),
         img_size=data_config['img_size'],
         train=False,
         lat_min=lat_min,

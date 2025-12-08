@@ -9,8 +9,8 @@ import sys
 from pathlib import Path
 
 # Add src to path
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "agent_1" / "src"))
 
 from utils.losses import HaversineLoss, haversine_distance_km
 from utils.coordinates import normalize_coordinates, denormalize_coordinates

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from datasets_agent2 import StreetViewGridDataset
 
 
-# downloading the model
+# UNCOMMENT TO DOWNLOAD MODEL
 # import ssl
 # ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -18,9 +18,9 @@ from datasets_agent2 import StreetViewGridDataset
 # Constants & Config
 # -----------------------------
 CONFIG_PATH = "configs/data.yaml"
-RESUME = True  # Set to True to resume from checkpoint
+RESUME = False  # Set to True to resume from checkpoint
 EPOCHS_1 = 10
-EPOCHS_2 = 60
+EPOCHS_2 = 15
 TOTAL_EPOCHS = EPOCHS_1 + EPOCHS_2
 CORES = 4
 
@@ -200,18 +200,32 @@ if __name__ == '__main__':
         )
 
     # -----------------------------
-    # Compute Class Weights
+    # Compute Class Weights (GeoGuessrAI Style)
     # -----------------------------
     print("Computing class weights from dataset...")
 
     # access labels directly from the dataset's dataframe
     all_labels = train_dataset.df['grid_label'].values
 
-    class_counts = torch.bincount(torch.tensor(all_labels), minlength=num_classes)
-    class_weights = 1.0 / (class_counts + 1e-6)
-    class_weights = class_weights / class_weights.sum()
+    class_counts = torch.bincount(torch.tensor(all_labels), minlength=num_classes).float()
+    
+    # Calculate inverse frequency weights with square root smoothing (like GeoGuessrAI)
+    total_images = len(all_labels)
+    class_weights = torch.zeros(num_classes)
+    
+    for i in range(num_classes):
+        if class_counts[i] > 0:
+            # Inverse frequency weighting with square root smoothing
+            # This matches the GeoGuessrAI formula: (total_images / (num_classes * count)) ** 0.5
+            class_weights[i] = (total_images / (num_classes * class_counts[i])) ** 0.5
+        else:
+            class_weights[i] = 1.0  # Default weight for empty classes
+    
     class_weights = class_weights.to(device)
-    print('Class weights computed!')
+    
+    print(f'Class weights computed!')
+    print(f'Weight range: [{class_weights.min():.3f}, {class_weights.max():.3f}]')
+    print(f'Weight mean: {class_weights.mean():.3f}, std: {class_weights.std():.3f}')
 
     # -----------------------------
     # Model Setup

@@ -1,6 +1,6 @@
 {
-  "test_size": 3478,
-  "top1_accuracy": 19.436457734330077,
-  "top3_accuracy": 43.61702127659575,
-  "top5_accuracy": 60.12075905692927
+  "test_size": 3487,
+  "top1_accuracy": 13.50731287639805,
+  "top3_accuracy": 31.43102953828506,
+  "top5_accuracy": 45.31115572125036
 }

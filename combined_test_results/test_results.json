@@ -1,0 +1,9 @@
+{
+  "test_size": 3487,
+  "agent1_mean_error_km": 891.7587843594653,
+  "agent1_median_error_km": 742.7225339276646,
+  "agent2_accuracy": 2.953828505878979,
+  "combined_mean_error_km": 923.5779096824773,
+  "combined_median_error_km": 779.578562982149,
+  "improvement_percent": -3.568131414132035
+}

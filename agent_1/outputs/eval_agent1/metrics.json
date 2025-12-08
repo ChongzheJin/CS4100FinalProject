@@ -1,0 +1,12 @@
+{
+  "count": 3487,
+  "mean_abs_lat_err": 3.983412423447001,
+  "mean_abs_lon_err": 7.908766776878854,
+  "mean_km_error": 891.7599913520335,
+  "median_km_error": 742.7237041337872,
+  "ckpt": "agent_1/checkpoints/agent1/best_checkpoint.pt",
+  "test_csv": "data/processed/us_streetview/test.csv",
+  "train_csv": "data/processed/us_streetview/train.csv",
+  "img_size": 224,
+  "batch_size": 64
+}

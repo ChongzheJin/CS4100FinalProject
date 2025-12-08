@@ -6,13 +6,16 @@ Verifies that the dataset correctly normalizes coordinates.
 
 import sys
 from pathlib import Path
+import torch
+import pandas as pd
 
 # Add src to path
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-
-from dataio.datasets import GeoCSVDataset
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+from data.datasets import GeoCSVDataset
+sys.path.insert(0, str(ROOT / "agent_1" / "src"))
 from utils.coordinates import compute_normalization_params, denormalize_coordinates
+
 
 
 def test_dataset_normalization():
