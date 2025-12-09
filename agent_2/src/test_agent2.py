@@ -523,7 +523,14 @@ class StreetViewTester:
         cm = confusion_matrix(y_true, y_pred)
         
         plt.figure(figsize=(12, 10))
-        cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        
+        # Handle division by zero - normalize only rows with non-zero sums
+        cm_normalized = np.zeros_like(cm, dtype=float)
+        row_sums = cm.sum(axis=1)
+        
+        # Only normalize rows that have samples
+        non_zero_rows = row_sums > 0
+        cm_normalized[non_zero_rows] = cm[non_zero_rows].astype('float') / row_sums[non_zero_rows][:, np.newaxis]
         
         sns.heatmap(cm_normalized, annot=False, cmap='Blues', cbar=True,
                    square=True, vmin=0, vmax=1)

@@ -20,7 +20,7 @@ from datasets_agent2 import StreetViewGridDataset
 CONFIG_PATH = "configs/data.yaml"
 RESUME = False  # Set to True to resume from checkpoint
 EPOCHS_1 = 10
-EPOCHS_2 = 15
+EPOCHS_2 = 20
 TOTAL_EPOCHS = EPOCHS_1 + EPOCHS_2
 CORES = 4
 
@@ -266,10 +266,16 @@ if __name__ == '__main__':
     # Resume if needed
     if RESUME:
         checkpoint_path = os.path.join(save_dir, 'latest.pth')
-        start_epoch, history, current_phase = load_checkpoint(checkpoint_path, model, optimizer)
-        if start_epoch > 0:
-            print(f"Resuming from epoch {start_epoch}, phase: {current_phase}")
-
+        if os.path.exists(checkpoint_path):
+            checkpoint = torch.load(checkpoint_path)
+            start_epoch = checkpoint['epoch'] + 1
+            history = checkpoint.get('history', {})
+            current_phase = checkpoint.get('phase', 'phase1')
+            
+            # Load model state first
+            model.load_state_dict(checkpoint['model_state_dict'])
+            
+            print(f"Loaded checkpoint from epoch {checkpoint['epoch'] + 1}, phase: {current_phase}")
     
     # -----------------------------
     # Training Loop
@@ -283,6 +289,8 @@ if __name__ == '__main__':
             param.requires_grad = False
         for param in model.fc.parameters():
             param.requires_grad = True
+        
+        optimizer = optim.AdamW(model.fc.parameters(), lr=3e-4, weight_decay=0.01)
         
         for epoch in range(start_epoch, EPOCHS_1):
             print(f"\nEpoch {epoch+1}/{TOTAL_EPOCHS} (Phase 1 - Head Only)")
