@@ -170,7 +170,7 @@ class CombinedAgentTester:
         
         return likelihoods
     
-    def combine_agents(self, img_tensor, return_details=True, weight=0.65):
+    def combine_agents(self, img_tensor, return_details=True, weight=0.7):
         """Combine outputs from both agents"""
         img_tensor = img_tensor.to(self.device)
         if img_tensor.dim() == 3:
