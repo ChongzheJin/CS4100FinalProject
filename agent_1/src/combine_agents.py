@@ -170,7 +170,7 @@ class CombinedAgentTester:
         
         return likelihoods
     
-    def combine_agents(self, img_tensor, return_details=True):
+    def combine_agents(self, img_tensor, return_details=True, weight=0.65):
         """Combine outputs from both agents"""
         img_tensor = img_tensor.to(self.device)
         if img_tensor.dim() == 3:
@@ -192,9 +192,13 @@ class CombinedAgentTester:
         with torch.no_grad():
             logits = self.agent2(img_tensor)
             probs = torch.softmax(logits, dim=1)[0].cpu().numpy()
-        
+
+
+        #likelihood term normalization
+        likelihoods_norm = likelihoods / likelihoods.sum()
+
         # Combine scores
-        scores = probs + likelihoods
+        scores = w * likelihoods_norm + (1 - w) * probs
         
         if scores.sum() == 0:
             scores = probs
